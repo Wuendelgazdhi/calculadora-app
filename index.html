@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CarCalc</title>
+<title>CarCalc Pro</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -14,36 +14,82 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at center, #111 0%, #000 100%);
-  font-family: 'Arial';
+  background: radial-gradient(circle at center, #000 0%, #050505 100%);
+  font-family: Arial;
+  overflow: hidden;
 }
 
-/* Painel estilo carro */
+/* luz ambiente animada */
+body::before {
+  content: "";
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(0,255,150,0.2), transparent);
+  animation: pulse 3s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 0.2; }
+  100% { transform: scale(1); opacity: 0.6; }
+}
+
 .calculator {
   width: 320px;
   padding: 20px;
-  border-radius: 20px;
+  border-radius: 25px;
   background: #0a0a0a;
-  box-shadow: 0 0 30px rgba(0,255,150,0.2);
+  box-shadow: 0 0 40px rgba(0,255,150,0.3);
+  z-index: 1;
 }
 
-/* Display estilo velocímetro */
+/* barra superior */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  color: #00ff9d;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.mode {
+  color: red;
+  font-weight: bold;
+}
+
+/* display */
 #display {
   color: #00ff9d;
   font-size: 42px;
   text-align: right;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   text-shadow: 0 0 10px #00ff9d;
 }
 
-/* Grid */
+/* "velocímetro fake" */
+.speed-bar {
+  height: 5px;
+  background: #111;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.speed {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00ff9d, red);
+  transition: 0.3s;
+}
+
+/* botões */
 .buttons {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
-/* Botões */
 button {
   height: 60px;
   border: none;
@@ -57,10 +103,9 @@ button {
 
 button:active {
   transform: scale(0.85);
-  box-shadow: 0 0 15px #00ff9d;
+  box-shadow: 0 0 20px #00ff9d;
 }
 
-/* Botões especiais */
 .orange {
   background: #ff3c00;
   color: white;
@@ -76,15 +121,6 @@ button:active {
   grid-column: span 2;
   border-radius: 40px;
 }
-
-/* Top bar estilo carro */
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  color: #00ff9d;
-  margin-bottom: 10px;
-  font-size: 14px;
-}
 </style>
 </head>
 
@@ -94,10 +130,14 @@ button:active {
 
   <div class="top-bar">
     <span>🚗 CAR MODE</span>
-    <span id="time"></span>
+    <span class="mode">SPORT</span>
   </div>
 
   <div id="display">0</div>
+
+  <div class="speed-bar">
+    <div class="speed" id="speed"></div>
+  </div>
 
   <div class="buttons">
     <button class="gray" onclick="clearDisplay()">C</button>
@@ -128,19 +168,18 @@ button:active {
 
 <script>
 let display = document.getElementById("display");
-
-// relógio estilo painel
-function atualizarHora() {
-  let agora = new Date();
-  document.getElementById("time").innerText =
-    agora.getHours().toString().padStart(2, '0') + ":" +
-    agora.getMinutes().toString().padStart(2, '0');
-}
-setInterval(atualizarHora, 1000);
+let speed = document.getElementById("speed");
 
 // vibração
 function vibrar() {
-  if (navigator.vibrate) navigator.vibrate(30);
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+
+// atualizar barra (efeito velocidade)
+function atualizarVelocidade() {
+  let tamanho = display.innerText.length * 10;
+  if (tamanho > 100) tamanho = 100;
+  speed.style.width = tamanho + "%";
 }
 
 // funções
@@ -151,17 +190,20 @@ function append(value) {
   } else {
     display.innerText += value;
   }
+  atualizarVelocidade();
 }
 
 function clearDisplay() {
   vibrar();
   display.innerText = "0";
+  atualizarVelocidade();
 }
 
 function deleteLast() {
   vibrar();
   display.innerText = display.innerText.slice(0, -1);
   if (display.innerText === "") display.innerText = "0";
+  atualizarVelocidade();
 }
 
 function calculate() {
@@ -171,6 +213,7 @@ function calculate() {
   } catch {
     display.innerText = "Erro";
   }
+  atualizarVelocidade();
 }
 
 // service worker
