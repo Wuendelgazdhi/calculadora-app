@@ -3,83 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Porsche Calc</title>
+<title>Porsche HUD Calc</title>
 
 <link rel="manifest" href="manifest.json">
 
 <style>
 body {
   margin: 0;
-  height: 100vh;
+  background: black;
+  font-family: Arial;
+  color: white;
+}
+
+/* tela de ignição */
+.start-screen {
+  position: fixed;
+  inset: 0;
+  background: black;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle, #000 0%, #111 100%);
-  font-family: Arial;
+  flex-direction: column;
+  z-index: 10;
 }
 
-/* iluminação vermelha Porsche */
-body::before {
-  content: "";
-  position: absolute;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255,0,0,0.2), transparent);
-  animation: pulse 3s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.3); opacity: 0.2; }
-  100% { transform: scale(1); opacity: 0.6; }
-}
-
-.calculator {
-  width: 320px;
+.start-btn {
   padding: 20px;
-  border-radius: 25px;
-  background: #0a0a0a;
-  box-shadow: 0 0 40px rgba(255,0,0,0.3);
-  z-index: 1;
+  border-radius: 50%;
+  background: red;
+  color: white;
+  font-size: 18px;
+  border: none;
+  box-shadow: 0 0 20px red;
 }
 
-/* topo */
-.top-bar {
+/* painel */
+.panel {
+  display: none;
+  padding: 20px;
+  max-width: 350px;
+  margin: auto;
+}
+
+/* HUD */
+.hud {
   display: flex;
   justify-content: space-between;
   color: red;
-  margin-bottom: 10px;
-  font-size: 14px;
+  font-size: 12px;
 }
 
-.mode {
-  color: #ff3c00;
-  font-weight: bold;
-}
-
-/* display */
-#display {
+#speed {
+  font-size: 40px;
+  text-align: center;
   color: red;
-  font-size: 42px;
+}
+
+#display {
   text-align: right;
-  margin-bottom: 15px;
-  text-shadow: 0 0 10px red;
+  font-size: 30px;
+  margin: 10px 0;
 }
 
-/* barra de "velocidade" */
-.speed-bar {
-  height: 5px;
-  background: #111;
-  margin-bottom: 15px;
-  border-radius: 10px;
+/* histórico */
+.history {
+  font-size: 12px;
+  color: #aaa;
+  height: 40px;
   overflow: hidden;
-}
-
-.speed {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, red, orange);
-  transition: 0.3s;
 }
 
 /* botões */
@@ -90,58 +81,42 @@ body::before {
 }
 
 button {
-  height: 60px;
-  border: none;
+  height: 55px;
   border-radius: 50%;
-  font-size: 20px;
+  border: none;
   background: #111;
   color: red;
-  box-shadow: inset 0 0 10px rgba(255,0,0,0.2);
-  transition: 0.15s;
 }
 
-button:active {
-  transform: scale(0.85);
-  box-shadow: 0 0 20px red;
-}
-
-.orange {
-  background: #ff3c00;
-  color: white;
-  box-shadow: 0 0 10px #ff3c00;
-}
-
-.gray {
-  background: #333;
-  color: white;
-}
-
-.zero {
-  grid-column: span 2;
-  border-radius: 40px;
-}
+.orange { background: red; color: white; }
+.gray { background: #333; color: white; }
+.zero { grid-column: span 2; border-radius: 40px; }
 </style>
 </head>
 
 <body>
 
-<div class="calculator">
+<div class="start-screen" id="start">
+  <h2>🚗 Porsche System</h2>
+  <button class="start-btn" onclick="ligar()">START ENGINE</button>
+</div>
 
-  <div class="top-bar">
-    <span>🏁 PORSCHE MODE</span>
-    <span class="mode">SPORT+</span>
+<div class="panel" id="panel">
+
+  <div class="hud">
+    <span id="gear">P</span>
+    <span id="time"></span>
   </div>
 
+  <div id="speed">0 km/h</div>
+
+  <div class="history" id="history"></div>
   <div id="display">0</div>
-
-  <div class="speed-bar">
-    <div class="speed" id="speed"></div>
-  </div>
 
   <div class="buttons">
     <button class="gray" onclick="clearDisplay()">C</button>
     <button class="gray" onclick="deleteLast()">⌫</button>
-    <button class="gray">%</button>
+    <button class="gray" onclick="trocarMarcha()">⚙️</button>
     <button class="orange" onclick="append('/')">÷</button>
 
     <button onclick="append('7')">7</button>
@@ -163,17 +138,29 @@ button:active {
     <button onclick="append('.')">.</button>
     <button class="orange" onclick="calculate()">=</button>
   </div>
+
 </div>
 
 <script>
 let display = document.getElementById("display");
 let speed = document.getElementById("speed");
+let history = document.getElementById("history");
+let gear = document.getElementById("gear");
 
-// som de motor
-function somMotor() {
-  let audio = new Audio("https://www.soundjay.com/mechanical/sounds/car-accelerating-1.mp3");
-  audio.volume = 0.2;
-  audio.play();
+let gears = ["P","R","N","D"];
+let g = 0;
+
+// ligar carro
+function ligar() {
+  document.getElementById("start").style.display = "none";
+  document.getElementById("panel").style.display = "block";
+  som();
+}
+
+// som motor
+function som() {
+  let a = new Audio("https://www.soundjay.com/mechanical/sounds/car-start-1.mp3");
+  a.play();
 }
 
 // vibração
@@ -181,47 +168,57 @@ function vibrar() {
   if (navigator.vibrate) navigator.vibrate(20);
 }
 
-// barra de velocidade
+// hora
+setInterval(() => {
+  let d = new Date();
+  document.getElementById("time").innerText =
+    d.getHours().toString().padStart(2,"0")+":"+
+    d.getMinutes().toString().padStart(2,"0");
+},1000);
+
+// velocidade animada
 function atualizarVelocidade() {
-  let tamanho = display.innerText.length * 10;
-  if (tamanho > 100) tamanho = 100;
-  speed.style.width = tamanho + "%";
+  let target = display.innerText.length * 10;
+  let current = parseInt(speed.innerText);
+  let interval = setInterval(() => {
+    if (current >= target) return clearInterval(interval);
+    current++;
+    speed.innerText = current + " km/h";
+  }, 5);
 }
 
-// funções
-function append(value) {
+// funções calc
+function append(v) {
   vibrar();
-  somMotor();
-  if (display.innerText === "0") {
-    display.innerText = value;
-  } else {
-    display.innerText += value;
-  }
+  display.innerText = display.innerText === "0" ? v : display.innerText + v;
   atualizarVelocidade();
 }
 
 function clearDisplay() {
-  vibrar();
   display.innerText = "0";
   atualizarVelocidade();
 }
 
 function deleteLast() {
-  vibrar();
-  display.innerText = display.innerText.slice(0, -1);
-  if (display.innerText === "") display.innerText = "0";
+  display.innerText = display.innerText.slice(0,-1)||"0";
   atualizarVelocidade();
 }
 
 function calculate() {
-  vibrar();
-  somMotor();
   try {
-    display.innerText = eval(display.innerText);
+    let res = eval(display.innerText);
+    history.innerText = display.innerText + " = " + res;
+    display.innerText = res;
   } catch {
     display.innerText = "Erro";
   }
   atualizarVelocidade();
+}
+
+// marcha
+function trocarMarcha() {
+  g = (g+1)%gears.length;
+  gear.innerText = gears[g];
 }
 
 // service worker
