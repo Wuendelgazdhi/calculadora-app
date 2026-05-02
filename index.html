@@ -1,71 +1,107 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora</title>
+  <meta charset="UTF-8">
+  <title>Calculadora</title>
 
-<link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
 
-<style>
-body {
-  background: black;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-family: Arial;
-}
+  <link rel="manifest" href="manifest.json">
 
-#display {
-  color: white;
-  font-size: 40px;
-  text-align: right;
-  margin-bottom: 20px;
-}
+  <style>
+    body {
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial;
+    }
 
-button {
-  padding: 15px;
-  margin: 5px;
-}
-</style>
+    .calculator {
+      width: 300px;
+      padding: 20px;
+    }
+
+    #display {
+      color: white;
+      font-size: 48px;
+      text-align: right;
+      margin-bottom: 20px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      height: 60px;
+      border: none;
+      border-radius: 50%;
+      font-size: 22px;
+      background: #333;
+      color: white;
+    }
+
+    .gray { background: #a5a5a5; color: black; }
+    .orange { background: #ff9500; }
+    .zero { grid-column: span 2; border-radius: 40px; }
+  </style>
 </head>
 
 <body>
 
-<div>
+<div class="calculator">
   <div id="display">0</div>
 
-  <button onclick="append('1')">1</button>
-  <button onclick="append('2')">2</button>
-  <button onclick="append('3')">3</button>
-  <button onclick="append('+')">+</button><br>
+  <div class="buttons">
+    <button class="gray" onclick="clearDisplay()">C</button>
+    <button class="gray" onclick="deleteLast()">⌫</button>
+    <button class="gray">%</button>
+    <button class="orange" onclick="append('/')">÷</button>
 
-  <button onclick="append('4')">4</button>
-  <button onclick="append('5')">5</button>
-  <button onclick="append('6')">6</button>
-  <button onclick="append('-')">-</button><br>
+    <button onclick="append('7')">7</button>
+    <button onclick="append('8')">8</button>
+    <button onclick="append('9')">9</button>
+    <button class="orange" onclick="append('*')">×</button>
 
-  <button onclick="append('7')">7</button>
-  <button onclick="append('8')">8</button>
-  <button onclick="append('9')">9</button>
-  <button onclick="append('*')">*</button><br>
+    <button onclick="append('4')">4</button>
+    <button onclick="append('5')">5</button>
+    <button onclick="append('6')">6</button>
+    <button class="orange" onclick="append('-')">−</button>
 
-  <button onclick="clearDisplay()">C</button>
-  <button onclick="append('0')">0</button>
-  <button onclick="calculate()">=</button>
-  <button onclick="append('/')">/</button>
+    <button onclick="append('1')">1</button>
+    <button onclick="append('2')">2</button>
+    <button onclick="append('3')">3</button>
+    <button class="orange" onclick="append('+')">+</button>
+
+    <button class="zero" onclick="append('0')">0</button>
+    <button onclick="append('.')">.</button>
+    <button class="orange" onclick="calculate()">=</button>
+  </div>
 </div>
 
 <script>
 let display = document.getElementById("display");
 
-function append(v) {
-  display.innerText = display.innerText === "0" ? v : display.innerText + v;
+function append(value) {
+  if (display.innerText === "0") {
+    display.innerText = value;
+  } else {
+    display.innerText += value;
+  }
 }
 
 function clearDisplay() {
   display.innerText = "0";
+}
+
+function deleteLast() {
+  display.innerText = display.innerText.slice(0, -1);
+  if (display.innerText === "") display.innerText = "0";
 }
 
 function calculate() {
@@ -74,6 +110,11 @@ function calculate() {
   } catch {
     display.innerText = "Erro";
   }
+}
+
+// registrar service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
 }
 </script>
 
